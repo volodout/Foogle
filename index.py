@@ -17,3 +17,4 @@ class Index:
             print('Встретилось в следующих директориях:')
             for directory in self.data[request]:
                 print(directory)
+

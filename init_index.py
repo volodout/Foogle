@@ -52,3 +52,4 @@ class InitIndex:
 
     def get(self):
         return self.data
+
