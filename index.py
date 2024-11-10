@@ -14,7 +14,8 @@ class Index:
             if len(self.data[request]) == 0:
                 print('Данное слово не найдено')
                 continue
-            print('Встретилось в следующих директориях:')
-            for directory in self.data[request]:
-                print(directory)
+            print('Найдены следующие совпадения:')
+            for pair in self.data[request]:
+                word, directory = pair
+                print(f'"{word}" in {directory}')
 

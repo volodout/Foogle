@@ -36,7 +36,7 @@ class InitIndex:
                 for word in words:
                     substrings = self.__generate_substrings(word)
                     for substring in substrings:
-                        self.data[substring].append(directory)
+                        self.data[substring].append((word, directory))
         except UnicodeDecodeError:
             print('Не получилось декодировать файл: ', directory)
 
