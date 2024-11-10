@@ -10,4 +10,3 @@ if __name__ == '__main__':
     index = Index(directory, progress_bar)
     progress_bar.close()
     index.start()
-
