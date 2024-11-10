@@ -37,13 +37,11 @@ class InitIndex:
                 text = f.read().lower()
                 words = set(re.findall(r'\w+', text))
 
-                # Добавляем слова и их подстроки в data
                 for word in words:
                     substrings = self.__generate_substrings(word)
                     for substring in substrings:
                         self.data[substring].append((word, directory))
 
-                # Разделяем текст на фразы для поиска многословных фраз
                 phrases_in_file = self.__generate_subphrases(text)
                 for phrase in phrases_in_file:
                     substrings = self.__generate_substrings(phrase)
@@ -51,10 +49,6 @@ class InitIndex:
                         if str(substring).strip().count(' ') == 0:
                             continue
                         if len(self.phrases[substring]) > 0 and len(self.phrases[substring]) > 0:
-                            sub = self.__generate_subphrases(substring)
-                            a = [i == self.phrases[substring][-1] for i in sub]
-                            if any(a):
-                                continue
                             if self.phrases[substring][-1][0] in phrase and directory == self.phrases[substring][-1][1]:
                                 continue
                         self.phrases[substring].append((phrase.strip(), directory))
