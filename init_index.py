@@ -27,13 +27,18 @@ class InitIndex:
                 continue
 
     def __get_data_in_file(self, directory):
-        with open(directory) as f:
-            text = f.read().lower()
-            words = set(re.findall(r'\w+', text))
-            for word in words:
-                substrings = self.__generate_substrings(word)
-                for substring in substrings:
-                    self.data[substring].append(directory)
+        if not directory.endswith('.txt'):
+            return
+        try:
+            with open(directory, 'r', encoding='utf-8') as f:
+                text = f.read().lower()
+                words = set(re.findall(r'\w+', text))
+                for word in words:
+                    substrings = self.__generate_substrings(word)
+                    for substring in substrings:
+                        self.data[substring].append(directory)
+        except UnicodeDecodeError:
+            print('Не получилось декодировать файл: ', directory)
 
     def __generate_substrings(self, word):
         return [word[i:j] for i in range(len(word)) for j in range(i + 1, len(word) + 1)]
@@ -41,7 +46,7 @@ class InitIndex:
     def __init_folders(self, folders):
         for folder in folders:
             try:
-               init = InitIndex(self.path + '\\' + folder, self.progress_bar, self.data)
+                init = InitIndex(self.path + '\\' + folder, self.progress_bar, self.data)
             except PermissionError:
                 continue
 

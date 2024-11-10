@@ -1,5 +1,6 @@
 import os
 
+
 def count_files_in_directory(directory):
     file_count = 0
     try:
