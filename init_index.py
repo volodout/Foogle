@@ -34,26 +34,28 @@ class InitIndex:
             return
         try:
             with open(directory, 'r', encoding='utf-8') as f:
-                text = f.read().lower()
-                words = set(re.findall(r'\w+', text))
+                for line in f:
+                    line = line.lower().strip()
+                    words = set(re.findall(r'\w+', line))
 
-                for word in words:
-                    substrings = self.__generate_substrings(word)
-                    for substring in substrings:
-                        self.data[substring].append((word, directory))
+                    for word in words:
+                        substrings = self.__generate_substrings(word)
+                        for substring in substrings:
+                            self.data[substring].append((word, directory))
 
-                phrases_in_file = self.__generate_subphrases(text)
-                for phrase in phrases_in_file:
-                    substrings = self.__generate_substrings(phrase)
-                    for substring in substrings:
-                        if str(substring).strip().count(' ') == 0:
-                            continue
-                        if len(self.phrases[substring]) > 0 and len(self.phrases[substring]) > 0:
-                            if self.phrases[substring][-1][0] in phrase and directory == self.phrases[substring][-1][1]:
+                    phrases_in_line = self.__generate_subphrases(line)
+                    for phrase in phrases_in_line:
+                        substrings = self.__generate_substrings(phrase)
+                        for substring in substrings:
+                            if ' ' not in substring.strip():
                                 continue
-                        self.phrases[substring].append((phrase.strip(), directory))
+                            if self.phrases[substring] and \
+                                    self.phrases[substring][-1][0] in phrase and \
+                                    directory == self.phrases[substring][-1][1]:
+                                continue
+                            self.phrases[substring].append((phrase.strip(), directory))
         except UnicodeDecodeError:
-            print('Не получилось декодировать файл: ', directory)
+            print('Не получилось декодировать файл:', directory)
 
     def __generate_subphrases(self, text):
         words = text.split()
