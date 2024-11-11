@@ -16,20 +16,20 @@ class InitIndex:
         self.progress_bar = progress_bar
         self.extensions = None
         path, folders, files = next(os.walk(directory))
-        self.__get_data_in_files(files)
-        self.__init_folders(folders)
+        self.get_data_in_files(files)
+        self.init_folders(folders)
 
-    def __get_data_in_files(self, files):
+    def get_data_in_files(self, files):
         for file in files:
             try:
                 if self.progress_bar:
                     self.progress_bar.update(1)
                 filepath = os.path.join(self.path, file)
-                self.__get_data_in_file(filepath)
+                self.get_data_in_file(filepath)
             except PermissionError:
                 continue
 
-    def __get_data_in_file(self, directory):
+    def get_data_in_file(self, directory):
         if not directory.endswith('.txt'):
             return
         try:
@@ -39,13 +39,13 @@ class InitIndex:
                     words = set(re.findall(r'\w+', line))
 
                     for word in words:
-                        substrings = self.__generate_substrings(word)
+                        substrings = self.generate_substrings(word)
                         for substring in substrings:
                             self.data[substring].append((word, directory))
 
-                    phrases_in_line = self.__generate_subphrases(line)
+                    phrases_in_line = self.generate_subphrases(line)
                     for phrase in phrases_in_line:
-                        substrings = self.__generate_substrings(phrase)
+                        substrings = self.generate_substrings(phrase)
                         for substring in substrings:
                             if ' ' not in substring.strip():
                                 continue
@@ -57,7 +57,7 @@ class InitIndex:
         except UnicodeDecodeError:
             print('Не получилось декодировать файл:', directory)
 
-    def __generate_subphrases(self, text):
+    def generate_subphrases(self, text):
         words = text.split()
         subphrases = []
         for start in range(len(words)):
@@ -65,10 +65,10 @@ class InitIndex:
                 subphrases.append(" ".join(words[start:end]))
         return sorted(subphrases, key=len)
 
-    def __generate_substrings(self, word):
+    def generate_substrings(self, word):
         return [word[i:j] for i in range(len(word)) for j in range(i + 1, len(word) + 1)]
 
-    def __init_folders(self, folders):
+    def init_folders(self, folders):
         for folder in folders:
             try:
                 init = InitIndex(self.path + '\\' + folder, self.progress_bar, self.data, self.phrases)
