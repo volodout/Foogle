@@ -5,13 +5,13 @@ from collections import defaultdict
 
 class InitIndex:
 
-    def __init__(self, directory, progress_bar, data=None, phrases=None):
-        if data is None:
-            data = defaultdict(list)
+    def __init__(self, directory, progress_bar, words=None, phrases=None):
+        if words is None:
+            words = defaultdict(list)
         if phrases is None:
-            phrases = defaultdict(list)
+            phrases = dict()
         self.path = directory
-        self.data = data
+        self.words = words
         self.phrases = phrases
         self.progress_bar = progress_bar
         self.extensions = None
@@ -34,36 +34,18 @@ class InitIndex:
             return
         try:
             with open(directory, 'r', encoding='utf-8') as f:
-                for line in f:
+                sentences = []
+                for i, line in enumerate(f):
                     line = line.lower().strip()
-                    words = set(re.findall(r'\w+', line))
-
-                    for word in words:
+                    words = line.split()
+                    sentences.append(words)
+                    for j, word in enumerate(words):
                         substrings = self.generate_substrings(word)
                         for substring in substrings:
-                            self.data[substring].append((word, directory))
-
-                    phrases_in_line = self.generate_subphrases(line)
-                    for phrase in phrases_in_line:
-                        substrings = self.generate_substrings(phrase)
-                        for substring in substrings:
-                            if ' ' not in substring.strip():
-                                continue
-                            if self.phrases[substring] and \
-                                    self.phrases[substring][-1][0] in phrase and \
-                                    directory == self.phrases[substring][-1][1]:
-                                continue
-                            self.phrases[substring].append((phrase.strip(), directory))
+                            self.words[substring].append((word, (i, j), directory))
+            self.phrases[directory] = tuple(sentences)
         except UnicodeDecodeError:
             print('Не получилось декодировать файл:', directory)
-
-    def generate_subphrases(self, text):
-        words = text.split()
-        subphrases = []
-        for start in range(len(words)):
-            for end in range(start + 1, len(words) + 1):
-                subphrases.append(" ".join(words[start:end]))
-        return sorted(subphrases, key=len)
 
     def generate_substrings(self, word):
         return [word[i:j] for i in range(len(word)) for j in range(i + 1, len(word) + 1)]
@@ -71,12 +53,12 @@ class InitIndex:
     def init_folders(self, folders):
         for folder in folders:
             try:
-                init = InitIndex(self.path + '\\' + folder, self.progress_bar, self.data, self.phrases)
+                init = InitIndex(self.path + '\\' + folder, self.progress_bar, self.words, self.phrases)
             except PermissionError:
                 continue
 
     def get_data(self):
-        return self.data
+        return self.words
 
     def get_phrases(self):
         return self.phrases

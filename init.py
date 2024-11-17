@@ -16,4 +16,3 @@ def count_files_in_directory(directory):
     except PermissionError:
         return 0
     return file_count
-

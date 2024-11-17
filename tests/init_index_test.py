@@ -2,7 +2,7 @@ import unittest
 
 from init_index import *
 
-DIR = r'C:\Users\volod\PycharmProjects\Foogle\tests\qq'
+DIR = r'qq'
 
 
 class IndexTest(unittest.TestCase):
