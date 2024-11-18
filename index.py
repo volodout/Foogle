@@ -1,3 +1,6 @@
+import os
+import pickle
+
 from init import compute_tf_idf
 from init_index import InitIndex
 import re
@@ -5,10 +8,26 @@ import re
 
 class Index:
     def __init__(self, directory, progress_bar):
-        init = InitIndex(directory, progress_bar)
-        self.data = init.get_data()
-        self.phrases = init.get_phrases()
-        self.tf_idf = compute_tf_idf(self.data, len(self.phrases))
+
+        path, folders, files = next(os.walk('saves'))
+        if f'{os.path.basename(directory)}.pkl' in files:
+            with open(f'saves/{os.path.basename(directory)}.pkl', 'rb') as f:
+                loaded_data = pickle.load(f)
+            self.data = loaded_data.data
+            self.phrases = loaded_data.phrases
+            self.tf_idf = compute_tf_idf(self.data, len(self.phrases))
+            print('Данные были загружены из памяти')
+        else:
+            init = InitIndex(directory, progress_bar)
+            self.data = init.get_data()
+            self.phrases = init.get_phrases()
+            print('start calculating tf-idf')
+            self.tf_idf = compute_tf_idf(self.data, len(self.phrases))
+            print('finish calculating tf-idf')
+            with open(f'saves/{os.path.basename(directory)}.pkl', 'wb') as f:
+                print('start dumping')
+                pickle.dump(self, f)
+                print('finish dumping')
 
     def start(self):
         while True:

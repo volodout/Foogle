@@ -46,7 +46,6 @@ class InitIndex:
                             self.words[substring].append((word, (i, j), directory))
             self.phrases[directory] = tuple(sentences)
         except UnicodeDecodeError:
-            print('Не получилось декодировать файл:', directory)
             pass
 
     def generate_substrings(self, word):
