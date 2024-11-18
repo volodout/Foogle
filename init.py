@@ -25,13 +25,16 @@ def compute_tf_idf(data, total_documents):
     word_document_counts = defaultdict(int)
 
     for substring, occurrences in data.items():
-        word_document_counts[substring] = len(occurrences)
-        for word, doc in occurrences:
+        unique_documents = set()
+        for word, coord, doc in occurrences:
             document_word_counts[doc][word] += 1
+            unique_documents.add(doc)
+        word_document_counts[substring] = len(unique_documents)
 
+    # Расчет TF-IDF
     for substring, occurrences in data.items():
         idf = math.log(1 + (total_documents / (1 + word_document_counts[substring])))
-        for word, doc in occurrences:
+        for word, coord, doc in occurrences:
             tf = document_word_counts[doc][word] / sum(document_word_counts[doc].values())
             tf_idf[substring].append((word, doc, tf * idf))
 

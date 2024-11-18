@@ -20,9 +20,6 @@ class InitIndex:
         self.get_data_in_files(files)
         self.init_folders(folders)
 
-        self.total_documents = len({doc for sublist in data.values() for _, doc in sublist})
-        self.tf_idf_data = compute_tf_idf(self.data, self.total_documents)
-
     def get_data_in_files(self, files):
         for file in files:
             try:
@@ -50,6 +47,7 @@ class InitIndex:
             self.phrases[directory] = tuple(sentences)
         except UnicodeDecodeError:
             print('Не получилось декодировать файл:', directory)
+            pass
 
     def generate_substrings(self, word):
         return [word[i:j] for i in range(len(word)) for j in range(i + 1, len(word) + 1)]
