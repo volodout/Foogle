@@ -3,11 +3,11 @@ import re
 
 
 class Index:
-
     def __init__(self, directory, progress_bar):
         init = InitIndex(directory, progress_bar)
         self.data = init.get_data()
         self.phrases = init.get_phrases()
+        self.tf_idf_data = init.tf_idf_data
 
     def start(self):
         while True:

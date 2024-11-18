@@ -1,6 +1,7 @@
 import os
 import re
 from collections import defaultdict
+from init import compute_tf_idf
 
 
 class InitIndex:
@@ -18,6 +19,9 @@ class InitIndex:
         path, folders, files = next(os.walk(directory))
         self.get_data_in_files(files)
         self.init_folders(folders)
+
+        self.total_documents = len({doc for sublist in data.values() for _, doc in sublist})
+        self.tf_idf_data = compute_tf_idf(self.data, self.total_documents)
 
     def get_data_in_files(self, files):
         for file in files:

@@ -1,4 +1,6 @@
+import math
 import os
+from collections import defaultdict
 
 
 def count_files_in_directory(directory):
@@ -16,3 +18,21 @@ def count_files_in_directory(directory):
     except PermissionError:
         return 0
     return file_count
+
+def compute_tf_idf(data, total_documents):
+    tf_idf = defaultdict(list)
+    document_word_counts = defaultdict(lambda: defaultdict(int))
+    word_document_counts = defaultdict(int)
+
+    for substring, occurrences in data.items():
+        word_document_counts[substring] = len(occurrences)
+        for word, doc in occurrences:
+            document_word_counts[doc][word] += 1
+
+    for substring, occurrences in data.items():
+        idf = math.log(1 + (total_documents / (1 + word_document_counts[substring])))
+        for word, doc in occurrences:
+            tf = document_word_counts[doc][word] / sum(document_word_counts[doc].values())
+            tf_idf[substring].append((word, doc, tf * idf))
+
+    return tf_idf
