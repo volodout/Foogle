@@ -4,6 +4,13 @@ import pickle
 import hashlib
 
 
+def default_dict_of_int():
+    return defaultdict(int)
+
+
+def default_dict_of_default_dict_int():
+    return defaultdict(default_dict_of_int)
+
 class InitIndex:
 
     def __init__(self, directory, progress_bar, checksum_directory,
@@ -28,10 +35,27 @@ class InitIndex:
         self.progress_bar = progress_bar
         self.del_directs = del_directs
         self.recalculate_directs = recalculate_directs
-        path, folders, files = next(os.walk(directory))
+        try:
+            path, folders, files = next(os.walk(directory))
+        except StopIteration:
+            print(directory)
         self.get_data_in_files(files)
         self.init_folders(folders)
 
+
+        if not hasattr(self, 'document_word_counts'):
+            self.document_word_counts = default_dict_of_default_dict_int()
+            self.word_document_counts = defaultdict(set)
+            self.total_documents = 0
+            docs = list(self.phrases.keys())
+            self.total_documents = len(docs)
+            for doc in docs:
+                for sentence in self.phrases[doc]:
+                    for w in sentence:
+                        self.document_word_counts[doc][w] += 1
+                        self.word_document_counts[w].add(doc)
+
+    @staticmethod
     def get_data_in_files(self, files):
         for file in files:
             try:
@@ -110,12 +134,35 @@ class InitIndex:
     def recovery_index(name, checksum_directory):
         with open(f'saves/{name}.pkl', 'rb') as f:
             loaded_data = pickle.load(f)
+
         if loaded_data.get_checksum_directory() != checksum_directory:
             res = InitIndex.recovery_directory(loaded_data)
             res.checksum_directory = checksum_directory
+            if not hasattr(res, 'document_word_counts'):
+                res.document_word_counts = default_dict_of_default_dict_int()
+                res.word_document_counts = defaultdict(set)
+                docs = list(res.phrases.keys())
+                res.total_documents = len(docs)
+                for doc in docs:
+                    for sentence in res.phrases[doc]:
+                        for w in sentence:
+                            res.document_word_counts[doc][w] += 1
+                            res.word_document_counts[w].add(doc)
             return res
+
         res = InitIndex.recover_files(loaded_data)
         res.checksum_directory = checksum_directory
+
+        if not hasattr(res, 'document_word_counts'):
+            res.document_word_counts = default_dict_of_default_dict_int()
+            res.word_document_counts = defaultdict(set)
+            docs = list(res.phrases.keys())
+            res.total_documents = len(docs)
+            for doc in docs:
+                for sentence in res.phrases[doc]:
+                    for w in sentence:
+                        res.document_word_counts[doc][w] += 1
+                        res.word_document_counts[w].add(doc)
         return res
 
     @staticmethod
@@ -152,14 +199,14 @@ class InitIndex:
             if key in del_directs:
                 init.phrases.pop(key)
                 checksums.pop(key)
-        for key in set(init.words.keys()):
+        for key in list(init.words.keys()):
             res = []
             for val in init.words[key]:
                 if val[-1] in del_directs:
                     continue
                 res.append(val)
             if len(res) == 0:
-                init.words.pop(key)
+                init.words.pop(key, None)
                 continue
             init.words[key] = res
 

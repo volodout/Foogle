@@ -1,11 +1,12 @@
+import math
 import os
+import re
 import pickle
+from collections import defaultdict
 
 from tqdm import tqdm
 
-from init import compute_tf_idf
 from init_index import InitIndex
-import re
 
 
 class Index:
@@ -30,6 +31,10 @@ class Index:
         self.checksum = checksum_directory
         self.checksums = init.get_checksums()
 
+        self.document_word_counts = init.document_word_counts
+        self.word_document_counts = init.word_document_counts
+        self.total_documents = init.total_documents
+
     def start(self):
         while True:
             print('Введите интересующее слово или фразу: ')
@@ -38,7 +43,7 @@ class Index:
             count_words = len(words_in_request)
 
             if count_words > 1:
-                base = self.data[words_in_request[0]]
+                base = self.data.get(words_in_request[0], [])
                 if not base:
                     print('Данное предложение не найдено')
                     continue
@@ -50,28 +55,39 @@ class Index:
                         continue
                     sentence = ' '.join(self.phrases[directory][i][j: j + count_words]).lower()
                     if re.search(re.escape(request), sentence):
-                        # tf_idf_score = sum(self.get_tf_idf(word, directory) for word in words_in_request)
-                        results.append((sentence, directory))
+                        score = sum(self.get_tf_idf(w, directory) for w in words_in_request)
+                        results.append((sentence, directory, score))
 
-                for sentence, directory in results:
-                    print(f'"{sentence}" in {directory}')
+                results.sort(key=lambda x: x[2], reverse=True)
+
+                for sentence, directory, score in results:
+                    print(f'"{sentence}" in {directory} (tf-idf: {score:.4f})')
             else:
-                if not self.data[request]:
+                base = self.data.get(request, [])
+                if not base:
                     print('Данное слово не найдено')
                     continue
 
                 print('Найдены следующие совпадения:')
                 results = []
-                for word, coord, directory in self.data[request]:
-                    # tf_idf_score = self.get_tf_idf(word, directory)
-                    results.append((word, directory))
+                for word, coord, directory in base:
+                    score = self.get_tf_idf(word, directory)
+                    results.append((word, directory, score))
 
-                # results.sort(key=lambda x: x[2], reverse=True)
-                for word, directory in results:
-                    print(f'"{word}" in {directory}')
+                results.sort(key=lambda x: x[2], reverse=True)
 
-    # def get_tf_idf(self, word, doc):
-    #     for w, d, score in self.tf_idf.get(word, []):
-    #         if d == doc:
-    #             return score
-    #     return 0
+                for word, directory, score in results:
+                    print(f'"{word}" in {directory} (tf-idf: {score:.4f})')
+
+    def get_tf_idf(self, word, doc):
+        doc_words = self.document_word_counts[doc]
+        term_freq = doc_words.get(word, 0)
+        total_terms_in_doc = sum(doc_words.values())
+        if total_terms_in_doc == 0:
+            return 0.0
+        tf = term_freq / total_terms_in_doc
+        df = len(self.word_document_counts.get(word, set()))
+        if df == 0:
+            return 0.0
+        idf = math.log((self.total_documents + 1) / (df + 1))
+        return tf * idf
