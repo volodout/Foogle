@@ -55,7 +55,7 @@ class InitIndex:
                         self.document_word_counts[doc][w] += 1
                         self.word_document_counts[w].add(doc)
 
-    @staticmethod
+
     def get_data_in_files(self, files):
         for file in files:
             try:
