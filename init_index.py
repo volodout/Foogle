@@ -4,6 +4,13 @@ import pickle
 import hashlib
 
 
+def default_dict_of_int():
+    return defaultdict(int)
+
+
+def default_dict_of_default_dict_int():
+    return defaultdict(default_dict_of_int)
+
 class InitIndex:
 
     def __init__(self, directory, progress_bar, checksum_directory,
@@ -29,6 +36,20 @@ class InitIndex:
         path, folders, files = next(os.walk(self.path))
         self.get_data_in_files(files)
         self.init_folders(folders)
+
+
+        if not hasattr(self, 'document_word_counts'):
+            self.document_word_counts = default_dict_of_default_dict_int()
+            self.word_document_counts = defaultdict(set)
+            self.total_documents = 0
+            docs = list(self.phrases.keys())
+            self.total_documents = len(docs)
+            for doc in docs:
+                for sentence in self.phrases[doc]:
+                    for w in sentence:
+                        self.document_word_counts[doc][w] += 1
+                        self.word_document_counts[w].add(doc)
+
 
     def get_data_in_files(self, files):
         for file in files:
@@ -111,9 +132,31 @@ class InitIndex:
         if loaded_data.get_checksum_directory() != checksum_directory:
             res = InitIndex.recovery_directory(loaded_data)
             res.checksum_directory = checksum_directory
+            if not hasattr(res, 'document_word_counts'):
+                res.document_word_counts = default_dict_of_default_dict_int()
+                res.word_document_counts = defaultdict(set)
+                docs = list(res.phrases.keys())
+                res.total_documents = len(docs)
+                for doc in docs:
+                    for sentence in res.phrases[doc]:
+                        for w in sentence:
+                            res.document_word_counts[doc][w] += 1
+                            res.word_document_counts[w].add(doc)
             return res
+
         res = InitIndex.recover_files(loaded_data)
         res.checksum_directory = checksum_directory
+
+        if not hasattr(res, 'document_word_counts'):
+            res.document_word_counts = default_dict_of_default_dict_int()
+            res.word_document_counts = defaultdict(set)
+            docs = list(res.phrases.keys())
+            res.total_documents = len(docs)
+            for doc in docs:
+                for sentence in res.phrases[doc]:
+                    for w in sentence:
+                        res.document_word_counts[doc][w] += 1
+                        res.word_document_counts[w].add(doc)
         return res
 
     @staticmethod

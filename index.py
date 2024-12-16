@@ -1,10 +1,23 @@
+import math
 import os
+import re
 import pickle
+import readline
+from collections import defaultdict
 
 from tqdm import tqdm
+
+from init import compute_tf_idf
 from init_index import InitIndex
 import re
 
+def completer_function_factory(options):
+    def completer(text, state):
+        matches = [x for x in options if x.startswith(text)]
+        if state < len(matches):
+            return matches[state]
+        return None
+    return completer
 
 class Index:
     def __init__(self, directory, checksum_directory, total_items):
@@ -28,7 +41,41 @@ class Index:
         self.checksum = checksum_directory
         self.checksums = init.get_checksums()
 
+        self.document_word_counts = init.document_word_counts
+        self.word_document_counts = init.word_document_counts
+        self.total_documents = init.total_documents
+
+        self.all_full_words = set()
+        for doc, sentences in self.phrases.items():
+            for sentence in sentences:
+                for w in sentence:
+                    self.all_full_words.add(w)
+
+        # Подсчитаем лучший (максимальный) tf-idf для каждого слова
+        self.best_tf_idf_for_word = {}
+        for w in self.all_full_words:
+            max_score = 0.0
+            # Пройдём по всем документам, чтобы найти максимальный tf-idf данного слова
+            for doc, doc_words in self.document_word_counts.items():
+                if w in doc_words:
+                    score = self.get_tf_idf(w, doc)
+                    if score > max_score:
+                        max_score = score
+            self.best_tf_idf_for_word[w] = max_score
+
     def start(self):
+        def completer(text, state):
+            matches = [w for w in self.all_full_words if w.startswith(text)]
+            # Сортируем по tf-idf убыванию
+            matches.sort(key=lambda w: self.best_tf_idf_for_word[w], reverse=True)
+            top_5 = matches[:5]
+            if state < len(top_5):
+                return top_5[state]
+            return None
+
+        readline.set_completer(completer)
+        readline.parse_and_bind('tab: complete')
+
         while True:
             print('Введите интересующее слово или фразу: ')
             request = input().lower()
@@ -36,25 +83,28 @@ class Index:
             count_words = len(words_in_request)
 
             if count_words > 1:
-                base = self.data[words_in_request[0]]
+                base = self.data.get(words_in_request[0], [])
                 if not base:
                     print('Данное предложение не найдено')
                     continue
-                for sentence, directory in self.check_phrase(base, count_words, request):
-                    print(f'"{sentence}" in {directory}')
+                for sentence, directory, score in self.check_phrase(base, count_words, request):
+                    print(f'"{sentence}" in {directory} (tf-idf: {score:.4f})')
 
             else:
-                if not self.data[request]:
+                base = self.data.get(request, [])
+                if not base:
                     print('Данное слово не найдено')
                     continue
-                for word, directory in self.check_word(request):
-                    print(f'"{word}" in {directory}')
+
+                for word, directory, score in self.check_word(request):
+                    print(f'"{word}" in {directory} (tf-idf: {score:.4f})')
 
     def check_word(self, request):
         print('Найдены следующие совпадения:')
         results = []
         for word, coord, directory in self.data[request]:
-            results.append((word, directory))
+            score = self.get_tf_idf(word, directory)
+            results.append((word, directory, score))
         return results
 
 
@@ -66,7 +116,27 @@ class Index:
                 continue
             sentence = ' '.join(self.phrases[directory][i][j: j + count_words]).lower()
             if re.search(re.escape(request), sentence):
+                score = sum(self.get_tf_idf(w, directory) for w in request.split())
                 # tf_idf_score = sum(self.get_tf_idf(word, directory) for word in words_in_request)
-                results.append((sentence, directory))
+                results.append((sentence, directory, score))
+
+        results.sort(key=lambda x: x[2], reverse=True)
+
         return results
+
+    def get_tf_idf(self, word, doc):
+        doc_words = self.document_word_counts[doc]
+        term_freq = doc_words.get(word, 0)
+        total_terms_in_doc = sum(doc_words.values())
+        if total_terms_in_doc == 0:
+            return 0.0
+        tf = term_freq / total_terms_in_doc
+        df = len(self.word_document_counts.get(word, set()))
+        if df == 0:
+            return 0.0
+        idf = math.log((self.total_documents + 1) / (df + 1))
+        return tf * idf
+
+
+
 

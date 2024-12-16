@@ -1,4 +1,8 @@
 from index import Index
+
+from init_index import InitIndex  # без этих двух импортов не работает
+from init_index import default_dict_of_int
+
 from init import count_files_and_checksum_in_directory
 
 if __name__ == '__main__':
