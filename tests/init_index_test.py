@@ -8,10 +8,12 @@ from init import count_files_and_checksum_in_directory
 
 from init_index import InitIndex
 
-DIR = r'qq'
-
-
 class IndexTest(unittest.TestCase):
+    def setUp(self):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.empty_dir = os.path.join(base_dir, 'empty_dir')
+        self.qq_dir = os.path.join(base_dir, 'qq')
+
     def clear_directory(self, directory_path='saves'):
         for item in os.listdir(directory_path):
             item_path = os.path.join(directory_path, item)
@@ -31,8 +33,8 @@ class IndexTest(unittest.TestCase):
         self.clear_directory()
 
     def check_dir(self):
-        data = count_files_and_checksum_in_directory(DIR)
-        index = Index(DIR, data[1], data[0])
+        data = count_files_and_checksum_in_directory(self.qq_dir)
+        index = Index(self.qq_dir, data[1], data[0])
         return index
 
     def test_with_recovery(self):
@@ -54,7 +56,7 @@ class IndexTest(unittest.TestCase):
         self.clear_directory()
         first_res = self.check_dir()
         request = 'lick kick pick hero'
-        with open(DIR + r"\\1.txt", 'r+') as f:
+        with open(self.qq_dir + r"\\1.txt", 'r+') as f:
             begin_str = f.readline()
             f.write(" hero")
         second_res = self.check_dir()
@@ -67,7 +69,7 @@ class IndexTest(unittest.TestCase):
         res = second_res.check_phrase(second_res.data[phrase[0]], len(phrase), request)
         self.assertEqual(1, len(res))
         self.assertTrue(res[0][1].endswith('1.txt'))
-        with open(DIR + r"\\1.txt", 'w') as f:
+        with open(self.qq_dir + r"\\1.txt", 'w') as f:
             f.write(begin_str)
         self.clear_directory()
 
@@ -75,7 +77,7 @@ class IndexTest(unittest.TestCase):
         self.clear_directory()
         first_res = self.check_dir()
         request = "abobaaaaaaaaaa top"
-        with open(DIR + r"\\52.txt", 'w') as f:
+        with open(self.qq_dir + r"\\52.txt", 'w') as f:
             f.write(request)
         second_res = self.check_dir()
         self.assertNotEqual(first_res.checksum, second_res.checksum)
@@ -89,14 +91,14 @@ class IndexTest(unittest.TestCase):
     def test_recovery_after_delete_file(self):
         self.clear_directory()
         first_res = self.check_dir()
-        with open(DIR + r"\\1.txt", 'r') as f:
+        with open(self.qq_dir + r"\\1.txt", 'r') as f:
             data = f.readline()
-        os.remove(DIR + r"\\1.txt")
+        os.remove(self.qq_dir + r"\\1.txt")
         second_res = self.check_dir()
         self.assertNotEqual(first_res.checksum, second_res.checksum)
         phrase = data.split()
         res = second_res.check_phrase(second_res.data[phrase[0]], len(phrase), data)
         self.assertEqual(0, len(res))
-        with open(DIR + r"\\1.txt", 'w') as f:
+        with open(self.qq_dir + r"\\1.txt", 'w') as f:
             f.write(data)
         self.clear_directory()
