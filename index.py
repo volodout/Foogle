@@ -7,7 +7,6 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from init import compute_tf_idf
 from init_index import InitIndex
 import re
 
