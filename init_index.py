@@ -9,26 +9,24 @@ class InitIndex:
     def __init__(self, directory, progress_bar, checksum_directory,
                  words=None, phrases=None, checksums=None,
                  is_recovery=False, del_directs=None, recalculate_directs=None):
-        if checksums is None:
-            checksums = dict()
-        if words is None:
-            words = defaultdict(list)
-        if phrases is None:
-            phrases = dict()
-        if del_directs is None and is_recovery:
-            del_directs = set(phrases.keys())
-        if is_recovery and recalculate_directs is None:
-            recalculate_directs = set()
+        if is_recovery:
+            if del_directs is None:
+                del_directs = set(phrases.keys())
+            if recalculate_directs is None:
+                recalculate_directs = set()
         self.path = directory
-        self.words = words
-        self.phrases = phrases
+        self.words = words or defaultdict(list)
+        self.phrases = phrases or {}
+        self.checksums = checksums or {}
         self.checksum_directory = checksum_directory
-        self.checksums = checksums
         self.is_recovery = is_recovery
         self.progress_bar = progress_bar
         self.del_directs = del_directs
         self.recalculate_directs = recalculate_directs
-        path, folders, files = next(os.walk(directory))
+        self.process_directory()
+
+    def process_directory(self):
+        path, folders, files = next(os.walk(self.path))
         self.get_data_in_files(files)
         self.init_folders(folders)
 

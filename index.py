@@ -2,8 +2,6 @@ import os
 import pickle
 
 from tqdm import tqdm
-
-from init import compute_tf_idf
 from init_index import InitIndex
 import re
 
@@ -42,36 +40,33 @@ class Index:
                 if not base:
                     print('Данное предложение не найдено')
                     continue
-
-                results = []
-                for word, coord, directory in base:
-                    i, j = coord
-                    if j + count_words - 1 >= len(self.phrases[directory][i]):
-                        continue
-                    sentence = ' '.join(self.phrases[directory][i][j: j + count_words]).lower()
-                    if re.search(re.escape(request), sentence):
-                        # tf_idf_score = sum(self.get_tf_idf(word, directory) for word in words_in_request)
-                        results.append((sentence, directory))
-
-                for sentence, directory in results:
+                for sentence, directory in self.check_phrase(base, count_words, request):
                     print(f'"{sentence}" in {directory}')
+
             else:
                 if not self.data[request]:
                     print('Данное слово не найдено')
                     continue
-
-                print('Найдены следующие совпадения:')
-                results = []
-                for word, coord, directory in self.data[request]:
-                    # tf_idf_score = self.get_tf_idf(word, directory)
-                    results.append((word, directory))
-
-                # results.sort(key=lambda x: x[2], reverse=True)
-                for word, directory in results:
+                for word, directory in self.check_word(request):
                     print(f'"{word}" in {directory}')
 
-    # def get_tf_idf(self, word, doc):
-    #     for w, d, score in self.tf_idf.get(word, []):
-    #         if d == doc:
-    #             return score
-    #     return 0
+    def check_word(self, request):
+        print('Найдены следующие совпадения:')
+        results = []
+        for word, coord, directory in self.data[request]:
+            results.append((word, directory))
+        return results
+
+
+    def check_phrase(self, base, count_words, request):
+        results = []
+        for word, coord, directory in base:
+            i, j = coord
+            if j + count_words - 1 >= len(self.phrases[directory][i]):
+                continue
+            sentence = ' '.join(self.phrases[directory][i][j: j + count_words]).lower()
+            if re.search(re.escape(request), sentence):
+                # tf_idf_score = sum(self.get_tf_idf(word, directory) for word in words_in_request)
+                results.append((sentence, directory))
+        return results
+
