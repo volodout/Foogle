@@ -50,11 +50,9 @@ class Index:
                 for w in sentence:
                     self.all_full_words.add(w)
 
-        # Подсчитаем лучший (максимальный) tf-idf для каждого слова
         self.best_tf_idf_for_word = {}
         for w in self.all_full_words:
             max_score = 0.0
-            # Пройдём по всем документам, чтобы найти максимальный tf-idf данного слова
             for doc, doc_words in self.document_word_counts.items():
                 if w in doc_words:
                     score = self.get_tf_idf(w, doc)
@@ -65,7 +63,6 @@ class Index:
     def start(self):
         def completer(text, state):
             matches = [w for w in self.all_full_words if w.startswith(text)]
-            # Сортируем по tf-idf убыванию
             matches.sort(key=lambda w: self.best_tf_idf_for_word[w], reverse=True)
             top_5 = matches[:5]
             if state < len(top_5):
@@ -116,7 +113,6 @@ class Index:
             sentence = ' '.join(self.phrases[directory][i][j: j + count_words]).lower()
             if re.search(re.escape(request), sentence):
                 score = sum(self.get_tf_idf(w, directory) for w in request.split())
-                # tf_idf_score = sum(self.get_tf_idf(word, directory) for word in words_in_request)
                 results.append((sentence, directory, score))
 
         results.sort(key=lambda x: x[2], reverse=True)
